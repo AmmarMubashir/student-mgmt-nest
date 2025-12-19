@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPERADMIN
+  ADMIN
+  STUDENT
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+
+  // 🔑 WHO CREATED THIS USER
+  createdById Int?
+  createdBy   User? @relation("UserCreator", fields: [createdById], references: [id])
+  createdUsers User[] @relation("UserCreator")
+
+  // 🔥 ADMIN → STUDENTS (missing piece)
+  studentsCreated Student[] @relation("AdminStudent")
+
+  student   Student?
+}
+
+model Student {
+  id      Int    @id @default(autoincrement())
+  userId  Int    @unique
+  class   String
+  section String
+  user    User   @relation(fields: [userId], references: [id])
+
+  // 🔑 ADMIN WHO CREATED THIS STUDENT
+  createdByAdminId Int?
+  createdByAdmin   User? @relation("AdminStudent", fields: [createdByAdminId], references: [id])
+}
+
